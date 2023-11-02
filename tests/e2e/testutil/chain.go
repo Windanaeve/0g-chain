@@ -14,6 +14,7 @@ import (
 	"github.com/cosmos/cosmos-sdk/crypto/keyring"
 	sdk "github.com/cosmos/cosmos-sdk/types"
 	authtypes "github.com/cosmos/cosmos-sdk/x/auth/types"
+	authz "github.com/cosmos/cosmos-sdk/x/authz"
 	banktypes "github.com/cosmos/cosmos-sdk/x/bank/types"
 	evmhd "github.com/evmos/ethermint/crypto/hd"
 
@@ -26,6 +27,13 @@ import (
 	"github.com/kava-labs/kava/client/grpc"
 	"github.com/kava-labs/kava/tests/e2e/runner"
 	"github.com/kava-labs/kava/tests/util"
+	cdptypes "github.com/kava-labs/kava/x/cdp/types"
+	committeetypes "github.com/kava-labs/kava/x/committee/types"
+	communitytypes "github.com/kava-labs/kava/x/community/types"
+	earntypes "github.com/kava-labs/kava/x/earn/types"
+	evmutiltypes "github.com/kava-labs/kava/x/evmutil/types"
+	incentivetypes "github.com/kava-labs/kava/x/incentive/types"
+	kavadisttypes "github.com/kava-labs/kava/x/kavadist/types"
 )
 
 // Chain wraps query clients & accounts for a network
@@ -42,6 +50,25 @@ type Chain struct {
 	erc20s        map[common.Address]struct{}
 
 	EncodingConfig kavaparams.EncodingConfig
+
+	Auth         authtypes.QueryClient
+	Authz        authz.QueryClient
+	Bank         banktypes.QueryClient
+	Cdp          cdptypes.QueryClient
+	Committee    committeetypes.QueryClient
+	Community    communitytypes.QueryClient
+	Distribution distrtypes.QueryClient
+	Incentive    incentivetypes.QueryClient
+	Kavadist     kavadisttypes.QueryClient
+	Earn         earntypes.QueryClient
+	Evm          evmtypes.QueryClient
+	Evmutil      evmutiltypes.QueryClient
+	Gov          govv1types.QueryClient
+	Mint         minttypes.QueryClient
+	Staking      stakingtypes.QueryClient
+	Tm           tmservice.ServiceClient
+	Tx           txtypes.ServiceClient
+	Upgrade      upgradetypes.QueryClient
 
 	TmSignClient tmclient.SignClient
 
@@ -90,6 +117,25 @@ func NewChain(t *testing.T, details *runner.ChainDetails, fundedAccountMnemonic 
 	if err != nil {
 		return chain, err
 	}
+
+	chain.Auth = authtypes.NewQueryClient(grpcConn)
+	chain.Authz = authz.NewQueryClient(grpcConn)
+	chain.Bank = banktypes.NewQueryClient(grpcConn)
+	chain.Cdp = cdptypes.NewQueryClient(grpcConn)
+	chain.Committee = committeetypes.NewQueryClient(grpcConn)
+	chain.Community = communitytypes.NewQueryClient(grpcConn)
+	chain.Distribution = distrtypes.NewQueryClient(grpcConn)
+	chain.Incentive = incentivetypes.NewQueryClient(grpcConn)
+	chain.Kavadist = kavadisttypes.NewQueryClient(grpcConn)
+	chain.Earn = earntypes.NewQueryClient(grpcConn)
+	chain.Evm = evmtypes.NewQueryClient(grpcConn)
+	chain.Evmutil = evmutiltypes.NewQueryClient(grpcConn)
+	chain.Gov = govv1types.NewQueryClient(grpcConn)
+	chain.Mint = minttypes.NewQueryClient(grpcConn)
+	chain.Staking = stakingtypes.NewQueryClient(grpcConn)
+	chain.Tm = tmservice.NewServiceClient(grpcConn)
+	chain.Tx = txtypes.NewServiceClient(grpcConn)
+	chain.Upgrade = upgradetypes.NewQueryClient(grpcConn)
 
 	// initialize accounts map
 	chain.accounts = make(map[string]*SigningAccount)
@@ -175,6 +221,21 @@ func (chain *Chain) QuerySdkForBalances(addr sdk.AccAddress) sdk.Coins {
 	res, err := chain.Grpc.Query.Bank.AllBalances(context.Background(), &banktypes.QueryAllBalancesRequest{
 		Address: addr.String(),
 	})
+	require.NoError(chain.t, err)
+	return res.Balances
+}
+
+// QuerySdkForBalancesAtHeight gets the balance of a particular address on this Chain, at the specified height.
+func (chain *Chain) QuerySdkForBalancesAtHeight(
+	height int64,
+	addr sdk.AccAddress,
+) sdk.Coins {
+	res, err := chain.Bank.AllBalances(
+		util.CtxAtHeight(height),
+		&banktypes.QueryAllBalancesRequest{
+			Address: addr.String(),
+		},
+	)
 	require.NoError(chain.t, err)
 	return res.Balances
 }
