@@ -1,16 +1,17 @@
 package e2e_test
 
 import (
+	"github.com/0glabs/0g-chain/chaincfg"
 	sdk "github.com/cosmos/cosmos-sdk/types"
 )
 
 func (suite *IntegrationTestSuite) TestGrpcClientUtil_Account() {
 	// ARRANGE
 	// setup kava account
-	kavaAcc := suite.Kava.NewFundedAccount("account-test", sdk.NewCoins(ukava(1e5)))
+	kavaAcc := suite.ZgChain.NewFundedAccount("account-test", sdk.NewCoins(chaincfg.MakeCoinForGasDenom(1e5)))
 
 	// ACT
-	rsp, err := suite.Kava.Grpc.BaseAccount(kavaAcc.SdkAddress.String())
+	rsp, err := suite.ZgChain.Grpc.BaseAccount(kavaAcc.SdkAddress.String())
 
 	// ASSERT
 	suite.Require().NoError(err)

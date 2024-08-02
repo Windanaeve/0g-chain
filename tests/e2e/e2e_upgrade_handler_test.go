@@ -8,17 +8,16 @@ import (
 	sdk "github.com/cosmos/cosmos-sdk/types"
 	consensustypes "github.com/cosmos/cosmos-sdk/x/consensus/types"
 	govtypes "github.com/cosmos/cosmos-sdk/x/gov/types/v1"
-	cdptypes "github.com/kava-labs/kava/x/cdp/types"
 )
 
 func (suite *IntegrationTestSuite) TestUpgradeParams_SDK() {
 	suite.SkipIfUpgradeDisabled()
 
-	beforeUpgradeCtx := suite.Kava.Grpc.CtxAtHeight(suite.UpgradeHeight - 1)
-	afterUpgradeCtx := suite.Kava.Grpc.CtxAtHeight(suite.UpgradeHeight)
+	beforeUpgradeCtx := suite.ZgChain.Grpc.CtxAtHeight(suite.UpgradeHeight - 1)
+	afterUpgradeCtx := suite.ZgChain.Grpc.CtxAtHeight(suite.UpgradeHeight)
 
 	// Before params
-	grpcClient := suite.Kava.Grpc
+	grpcClient := suite.ZgChain.Grpc
 	govParamsBefore, err := grpcClient.Query.Gov.Params(beforeUpgradeCtx, &govtypes.QueryParamsRequest{
 		ParamsType: govtypes.ParamDeposit,
 	})
@@ -72,9 +71,9 @@ func (suite *IntegrationTestSuite) TestUpgradeParams_SDK() {
 func (suite *IntegrationTestSuite) TestUpgradeParams_Consensus() {
 	suite.SkipIfUpgradeDisabled()
 
-	afterUpgradeCtx := suite.Kava.Grpc.CtxAtHeight(suite.UpgradeHeight)
+	afterUpgradeCtx := suite.ZgChain.Grpc.CtxAtHeight(suite.UpgradeHeight)
 
-	grpcClient := suite.Kava.Grpc
+	grpcClient := suite.ZgChain.Grpc
 	paramsAfter, err := grpcClient.Query.Consensus.Params(afterUpgradeCtx, &consensustypes.QueryParamsRequest{})
 	suite.NoError(err)
 
@@ -99,25 +98,25 @@ func (suite *IntegrationTestSuite) TestUpgradeParams_Consensus() {
 	suite.Require().Equal(expectedParams, *paramsAfter.Params, "x/consensus params after upgrade should be as expected")
 }
 
-func (suite *IntegrationTestSuite) TestUpgradeParams_CDP_Interval() {
-	suite.SkipIfUpgradeDisabled()
+// func (suite *IntegrationTestSuite) TestUpgradeParams_CDP_Interval() {
+// 	suite.SkipIfUpgradeDisabled()
 
-	beforeUpgradeCtx := suite.Kava.Grpc.CtxAtHeight(suite.UpgradeHeight - 1)
-	afterUpgradeCtx := suite.Kava.Grpc.CtxAtHeight(suite.UpgradeHeight)
+// 	beforeUpgradeCtx := suite.ZgChain.Grpc.CtxAtHeight(suite.UpgradeHeight - 1)
+// 	afterUpgradeCtx := suite.ZgChain.Grpc.CtxAtHeight(suite.UpgradeHeight)
 
-	grpcClient := suite.Kava.Grpc
+// 	grpcClient := suite.ZgChain.Grpc
 
-	paramsBefore, err := grpcClient.Query.Cdp.Params(beforeUpgradeCtx, &cdptypes.QueryParamsRequest{})
-	suite.Require().NoError(err)
-	paramsAfter, err := grpcClient.Query.Cdp.Params(afterUpgradeCtx, &cdptypes.QueryParamsRequest{})
-	suite.Require().NoError(err)
+// 	paramsBefore, err := grpcClient.Query.Cdp.Params(beforeUpgradeCtx, &cdptypes.QueryParamsRequest{})
+// 	suite.Require().NoError(err)
+// 	paramsAfter, err := grpcClient.Query.Cdp.Params(afterUpgradeCtx, &cdptypes.QueryParamsRequest{})
+// 	suite.Require().NoError(err)
 
-	expectedParams := paramsBefore.Params
-	expectedParams.LiquidationBlockInterval = int64(50)
+// 	expectedParams := paramsBefore.Params
+// 	expectedParams.LiquidationBlockInterval = int64(50)
 
-	suite.Require().Equal(expectedParams, paramsAfter.Params,
-		"expected cdp parameters to equal previous parameters with a liquidation block interval of 100")
-}
+// 	suite.Require().Equal(expectedParams, paramsAfter.Params,
+// 		"expected cdp parameters to equal previous parameters with a liquidation block interval of 100")
+// }
 
 func mustParseDuration(s string) *time.Duration {
 	d, err := time.ParseDuration(s)

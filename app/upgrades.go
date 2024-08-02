@@ -3,44 +3,70 @@ package app
 import (
 	"fmt"
 
-	"github.com/cosmos/cosmos-sdk/baseapp"
 	storetypes "github.com/cosmos/cosmos-sdk/store/types"
 	sdk "github.com/cosmos/cosmos-sdk/types"
 	"github.com/cosmos/cosmos-sdk/types/module"
-	authtypes "github.com/cosmos/cosmos-sdk/x/auth/types"
-	banktypes "github.com/cosmos/cosmos-sdk/x/bank/types"
-	consensustypes "github.com/cosmos/cosmos-sdk/x/consensus/types"
-	crisistypes "github.com/cosmos/cosmos-sdk/x/crisis/types"
-	distrtypes "github.com/cosmos/cosmos-sdk/x/distribution/types"
-	govtypes "github.com/cosmos/cosmos-sdk/x/gov/types"
-	govv1 "github.com/cosmos/cosmos-sdk/x/gov/types/v1"
-	minttypes "github.com/cosmos/cosmos-sdk/x/mint/types"
-	paramstypes "github.com/cosmos/cosmos-sdk/x/params/types"
-	slashingtypes "github.com/cosmos/cosmos-sdk/x/slashing/types"
 	stakingtypes "github.com/cosmos/cosmos-sdk/x/staking/types"
 	upgradetypes "github.com/cosmos/cosmos-sdk/x/upgrade/types"
-	packetforwardtypes "github.com/cosmos/ibc-apps/middleware/packet-forward-middleware/v7/packetforward/types"
-	ibctransfertypes "github.com/cosmos/ibc-go/v7/modules/apps/transfer/types"
-	ibctmmigrations "github.com/cosmos/ibc-go/v7/modules/light-clients/07-tendermint/migrations"
 )
 
 const (
 	UpgradeName_Mainnet = "v0.26.0"
 	UpgradeName_Testnet = "v0.26.0-alpha.0"
+	UpgradeName_E2ETest = "v0.26.0-testing"
+)
+
+var (
+	// KAVA to ukava - 6 decimals
+	kavaConversionFactor = sdk.NewInt(1000_000)
+	secondsPerYear       = sdk.NewInt(365 * 24 * 60 * 60)
+
+	// 10 Million KAVA per year in staking rewards, inflation disable time 2024-01-01T00:00:00 UTC
+	// CommunityParams_Mainnet = communitytypes.NewParams(
+	// 	time.Date(2024, 1, 1, 0, 0, 0, 0, time.UTC),
+	// 	// before switchover
+	// 	sdkmath.LegacyZeroDec(),
+	// 	// after switchover - 10M KAVA to ukava per year / seconds per year
+	// 	sdkmath.LegacyNewDec(10_000_000).
+	// 		MulInt(kavaConversionFactor).
+	// 		QuoInt(secondsPerYear),
+	// )
+
+	// Testnet -- 15 Trillion KAVA per year in staking rewards, inflation disable time 2023-11-16T00:00:00 UTC
+	// CommunityParams_Testnet = communitytypes.NewParams(
+	// 	time.Date(2023, 11, 16, 0, 0, 0, 0, time.UTC),
+	// 	// before switchover
+	// 	sdkmath.LegacyZeroDec(),
+	// 	// after switchover
+	// 	sdkmath.LegacyNewDec(15_000_000).
+	// 		MulInt64(1_000_000). // 15M * 1M = 15T
+	// 		MulInt(kavaConversionFactor).
+	// 		QuoInt(secondsPerYear),
+	// )
+
+	// CommunityParams_E2E = communitytypes.NewParams(
+	// 	time.Now().Add(10*time.Second).UTC(), // relative time for testing
+	// 	sdkmath.LegacyNewDec(0),              // stakingRewardsPerSecond
+	// 	sdkmath.LegacyNewDec(1000),           // upgradeTimeSetstakingRewardsPerSecond
+	// )
 
 	CDPLiquidationBlockInterval = int64(50)
 )
 
 // RegisterUpgradeHandlers registers the upgrade handlers for the app.
 func (app App) RegisterUpgradeHandlers() {
-	app.upgradeKeeper.SetUpgradeHandler(
-		UpgradeName_Mainnet,
-		upgradeHandler(app, UpgradeName_Mainnet),
-	)
-	app.upgradeKeeper.SetUpgradeHandler(
-		UpgradeName_Testnet,
-		upgradeHandler(app, UpgradeName_Testnet),
-	)
+	// app.upgradeKeeper.SetUpgradeHandler(
+	// 	UpgradeName_Mainnet,
+	// 	upgradeHandler(app, UpgradeName_Mainnet, CommunityParams_Mainnet),
+	// )
+	// app.upgradeKeeper.SetUpgradeHandler(
+	// 	UpgradeName_Testnet,
+	// 	upgradeHandler(app, UpgradeName_Testnet, CommunityParams_Testnet),
+	// )
+	// app.upgradeKeeper.SetUpgradeHandler(
+	// 	UpgradeName_E2ETest,
+	// 	upgradeHandler(app, UpgradeName_Testnet, CommunityParams_E2E),
+	// )
 
 	upgradeInfo, err := app.upgradeKeeper.ReadUpgradeInfoFromDisk()
 	if err != nil {
@@ -48,14 +74,14 @@ func (app App) RegisterUpgradeHandlers() {
 	}
 
 	doUpgrade := upgradeInfo.Name == UpgradeName_Mainnet ||
-		upgradeInfo.Name == UpgradeName_Testnet
+		upgradeInfo.Name == UpgradeName_Testnet ||
+		upgradeInfo.Name == UpgradeName_E2ETest
 
 	if doUpgrade && !app.upgradeKeeper.IsSkipHeight(upgradeInfo.Height) {
 		storeUpgrades := storetypes.StoreUpgrades{
 			Added: []string{
-				crisistypes.ModuleName,
-				consensustypes.ModuleName,
-				packetforwardtypes.ModuleName,
+				// x/community added store
+				// communitytypes.ModuleName,
 			},
 		}
 
@@ -76,65 +102,154 @@ func upgradeHandler(
 	) (module.VersionMap, error) {
 		app.Logger().Info(fmt.Sprintf("running %s upgrade handler", name))
 
-		baseAppLegacySS := app.paramsKeeper.Subspace(baseapp.Paramspace).WithKeyTable(paramstypes.ConsensusParamsKeyTable())
-
-		// Set param key table for params module migration
-		for _, subspace := range app.paramsKeeper.GetSubspaces() {
-			subspace := subspace
-			var keyTable paramstypes.KeyTable
-			switch subspace.Name() {
-			// sdk
-			case authtypes.ModuleName:
-				keyTable = authtypes.ParamKeyTable() //nolint:staticcheck
-			case banktypes.ModuleName:
-				keyTable = banktypes.ParamKeyTable() //nolint:staticcheck,nolintlint
-			case stakingtypes.ModuleName:
-				keyTable = stakingtypes.ParamKeyTable()
-			case minttypes.ModuleName:
-				keyTable = minttypes.ParamKeyTable() //nolint:staticcheck
-			case distrtypes.ModuleName:
-				keyTable = distrtypes.ParamKeyTable() //nolint:staticcheck,nolintlint
-			case slashingtypes.ModuleName:
-				keyTable = slashingtypes.ParamKeyTable() //nolint:staticcheck
-			case govtypes.ModuleName:
-				keyTable = govv1.ParamKeyTable() //nolint:staticcheck
-			case crisistypes.ModuleName:
-				keyTable = crisistypes.ParamKeyTable() //nolint:staticcheck
-
-			// ibc
-			case ibctransfertypes.ModuleName:
-				keyTable = ibctransfertypes.ParamKeyTable() //nolint:staticcheck
-
-			default:
-				continue
-			}
-			if !subspace.HasKeyTable() {
-				// NOTE: This modifies the internal map used to store the key table entries
-				// which is a pointer.
-				subspace.WithKeyTable(keyTable)
-			}
+		toVM, err := app.mm.RunMigrations(ctx, app.configurator, fromVM)
+		if err != nil {
+			return toVM, err
 		}
 
-		// optional migration: prune expired tendermint consensus states to save storage space
-		// see https://github.com/cosmos/ibc-go/blob/v7.2.0/docs/migrations/v6-to-v7.md#chains
-		if _, err := ibctmmigrations.PruneExpiredConsensusStates(ctx, app.appCodec, app.ibcKeeper.ClientKeeper); err != nil {
-			return nil, err
-		}
+		//
+		// Staking validator minimum commission
+		//
+		UpdateValidatorMinimumCommission(ctx, app)
 
-		// migrate tendermint consensus parameters from x/params module to a
-		// dedicated x/consensus module.
-		baseapp.MigrateParams(ctx, baseAppLegacySS, &app.consensusParamsKeeper)
+		//
+		// Community Params
+		//
+		// app.communityKeeper.SetParams(ctx, communityParams)
+		// app.Logger().Info(
+		// 	"initialized x/community params",
+		// 	"UpgradeTimeDisableInflation", communityParams.UpgradeTimeDisableInflation,
+		// 	"StakingRewardsPerSecond", communityParams.StakingRewardsPerSecond,
+		// 	"UpgradeTimeSetStakingRewardsPerSecond", communityParams.UpgradeTimeSetStakingRewardsPerSecond,
+		// )
 
-		// run migrations for all modules and return new consensus version map
-		versionMap, err := app.mm.RunMigrations(ctx, app.configurator, fromVM)
+		//
+		// Kavadist gov grant
+		//
+		// msgGrant, err := authz.NewMsgGrant(
+		// 	app.accountKeeper.GetModuleAddress(kavadisttypes.ModuleName),        // granter
+		// 	app.accountKeeper.GetModuleAddress(govtypes.ModuleName),             // grantee
+		// 	authz.NewGenericAuthorization(sdk.MsgTypeURL(&banktypes.MsgSend{})), // authorization
+		// 	nil, // expiration
+		// )
+		// if err != nil {
+		// 	return toVM, err
+		// }
+		// _, err = app.authzKeeper.Grant(ctx, msgGrant)
+		// if err != nil {
+		// 	return toVM, err
+		// }
+		// app.Logger().Info("created gov grant for kavadist funds")
 
-		// Set risky CDP's to sync interest and liquidate every 100 blocks instead
-		// of every block.  This significantly improves performance as this cdp
-		// process is a signification porition of time spent during block execution.
-		cdpParams := app.cdpKeeper.GetParams(ctx)
-		cdpParams.LiquidationBlockInterval = CDPLiquidationBlockInterval
-		app.cdpKeeper.SetParams(ctx, cdpParams)
+		//
+		// Gov Quorum
+		//
+		govTallyParams := app.govKeeper.GetTallyParams(ctx)
+		oldQuorum := govTallyParams.Quorum
+		govTallyParams.Quorum = sdkmath.LegacyMustNewDecFromStr("0.2").String()
+		app.govKeeper.SetTallyParams(ctx, govTallyParams)
+		app.Logger().Info(fmt.Sprintf("updated tally quorum from %s to %s", oldQuorum, govTallyParams.Quorum))
 
-		return versionMap, err
+		//
+		// Incentive Params
+		//
+		UpdateIncentiveParams(ctx, app)
+
+		return toVM, nil
 	}
+}
+
+// UpdateValidatorMinimumCommission updates the commission rate for all
+// validators to be at least the new min commission rate, and sets the minimum
+// commission rate in the staking params.
+func UpdateValidatorMinimumCommission(
+	ctx sdk.Context,
+	app App,
+) {
+	resultCount := make(map[stakingtypes.BondStatus]int)
+
+	// Iterate over *all* validators including inactive
+	app.stakingKeeper.IterateValidators(
+		ctx,
+		func(index int64, validator stakingtypes.ValidatorI) (stop bool) {
+			// Skip if validator commission is already >= 5%
+			if validator.GetCommission().GTE(ValidatorMinimumCommission) {
+				return false
+			}
+
+			val, ok := validator.(stakingtypes.Validator)
+			if !ok {
+				panic("expected stakingtypes.Validator")
+			}
+
+			// Set minimum commission rate to 5%, when commission is < 5%
+			val.Commission.Rate = ValidatorMinimumCommission
+			val.Commission.UpdateTime = ctx.BlockTime()
+
+			// Update MaxRate if necessary
+			if val.Commission.MaxRate.LT(ValidatorMinimumCommission) {
+				val.Commission.MaxRate = ValidatorMinimumCommission
+			}
+
+			if err := app.stakingKeeper.BeforeValidatorModified(ctx, val.GetOperator()); err != nil {
+				panic(fmt.Sprintf("failed to call BeforeValidatorModified: %s", err))
+			}
+			app.stakingKeeper.SetValidator(ctx, val)
+
+			// Keep track of counts just for logging purposes
+			switch val.GetStatus() {
+			case stakingtypes.Bonded:
+				resultCount[stakingtypes.Bonded]++
+			case stakingtypes.Unbonded:
+				resultCount[stakingtypes.Unbonded]++
+			case stakingtypes.Unbonding:
+				resultCount[stakingtypes.Unbonding]++
+			}
+
+			return false
+		},
+	)
+
+	app.Logger().Info(
+		"updated validator minimum commission rate for all existing validators",
+		stakingtypes.BondStatusBonded, resultCount[stakingtypes.Bonded],
+		stakingtypes.BondStatusUnbonded, resultCount[stakingtypes.Unbonded],
+		stakingtypes.BondStatusUnbonding, resultCount[stakingtypes.Unbonding],
+	)
+
+	stakingParams := app.stakingKeeper.GetParams(ctx)
+	stakingParams.MinCommissionRate = ValidatorMinimumCommission
+	app.stakingKeeper.SetParams(ctx, stakingParams)
+
+	app.Logger().Info(
+		"updated x/staking params minimum commission rate",
+		"MinCommissionRate", stakingParams.MinCommissionRate,
+	)
+}
+
+// UpdateIncentiveParams modifies the earn rewards period for bkava to be 600K KAVA per year.
+func UpdateIncentiveParams(
+	ctx sdk.Context,
+	app App,
+) {
+	// incentiveParams := app.incentiveKeeper.GetParams(ctx)
+
+	// bkava annualized rewards: 600K KAVA
+	// newAmount := sdkmath.LegacyNewDec(600_000).
+	// 	MulInt(kavaConversionFactor).
+	// 	QuoInt(secondsPerYear).
+	// 	TruncateInt()
+
+	// for i := range incentiveParams.EarnRewardPeriods {
+	// 	if incentiveParams.EarnRewardPeriods[i].CollateralType != "bkava" {
+	// 		continue
+	// 	}
+
+	// 	// Update rewards per second via index
+	// 	incentiveParams.EarnRewardPeriods[i].RewardsPerSecond = sdk.NewCoins(
+	// 		sdk.NewCoin("ukava", newAmount),
+	// 	)
+	// }
+
+	// app.incentiveKeeper.SetParams(ctx, incentiveParams)
 }
