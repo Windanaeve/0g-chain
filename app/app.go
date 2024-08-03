@@ -839,7 +839,7 @@ func NewApp(
 		// earn.NewAppModule(app.earnKeeper, app.accountKeeper, app.bankKeeper),
 		// router.NewAppModule(app.routerKeeper),
 		// nil InflationCalculationFn, use SDK's default inflation function
-		mint.NewAppModule(appCodec, app.mintKeeper, app.accountKeeper, nil, mintSubspace),
+		mint.NewAppModule(appCodec, app.mintKeeper, app.accountKeeper, chaincfg.CustomInflationCalculateFn, mintSubspace),
 		// community.NewAppModule(app.communityKeeper, app.accountKeeper),
 		metrics.NewAppModule(options.TelemetryOptions),
 
