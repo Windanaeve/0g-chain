@@ -799,6 +799,8 @@ func NewApp(
 		keys[counciltypes.StoreKey], appCodec, app.stakingKeeper,
 	)
 
+	app.vestingKeeper = vestingkeeper.NewVestingKeeper(app.accountKeeper, app.bankKeeper, keys[vestingtypes.StoreKey])
+
 	// create the module manager (Note: Any module instantiated in the module manager that is later modified
 	// must be passed by reference here.)
 	app.mm = module.NewManager(
@@ -839,7 +841,7 @@ func NewApp(
 		// earn.NewAppModule(app.earnKeeper, app.accountKeeper, app.bankKeeper),
 		// router.NewAppModule(app.routerKeeper),
 		// nil InflationCalculationFn, use SDK's default inflation function
-		mint.NewAppModule(appCodec, app.mintKeeper, app.accountKeeper, chaincfg.CustomInflationCalculateFn, mintSubspace),
+		mint.NewAppModule(appCodec, app.mintKeeper, app.accountKeeper, chaincfg.NextInflationRate, mintSubspace),
 		// community.NewAppModule(app.communityKeeper, app.accountKeeper),
 		metrics.NewAppModule(options.TelemetryOptions),
 
