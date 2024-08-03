@@ -28,6 +28,7 @@ import (
 	authtx "github.com/cosmos/cosmos-sdk/x/auth/tx"
 	authtypes "github.com/cosmos/cosmos-sdk/x/auth/types"
 	"github.com/cosmos/cosmos-sdk/x/auth/vesting"
+	vestingkeeper "github.com/cosmos/cosmos-sdk/x/auth/vesting/keeper"
 	vestingtypes "github.com/cosmos/cosmos-sdk/x/auth/vesting/types"
 	"github.com/cosmos/cosmos-sdk/x/authz"
 	authzkeeper "github.com/cosmos/cosmos-sdk/x/authz/keeper"
@@ -96,7 +97,6 @@ import (
 	"github.com/evmos/ethermint/x/evm"
 	evmkeeper "github.com/evmos/ethermint/x/evm/keeper"
 	evmtypes "github.com/evmos/ethermint/x/evm/types"
-	"github.com/evmos/ethermint/x/evm/vm/geth"
 	"github.com/evmos/ethermint/x/feemarket"
 	feemarketkeeper "github.com/evmos/ethermint/x/feemarket/keeper"
 	feemarkettypes "github.com/evmos/ethermint/x/feemarket/types"
@@ -105,6 +105,8 @@ import (
 	"github.com/0glabs/0g-chain/app/ante"
 	chainparams "github.com/0glabs/0g-chain/app/params"
 	"github.com/0glabs/0g-chain/chaincfg"
+	dasignersprecompile "github.com/0glabs/0g-chain/precompiles/dasigners"
+
 	"github.com/0glabs/0g-chain/x/bep3"
 	bep3keeper "github.com/0glabs/0g-chain/x/bep3/keeper"
 	bep3types "github.com/0glabs/0g-chain/x/bep3/types"
@@ -115,7 +117,9 @@ import (
 	council "github.com/0glabs/0g-chain/x/council/v1"
 	councilkeeper "github.com/0glabs/0g-chain/x/council/v1/keeper"
 	counciltypes "github.com/0glabs/0g-chain/x/council/v1/types"
-
+	dasigners "github.com/0glabs/0g-chain/x/dasigners/v1"
+	dasignerskeeper "github.com/0glabs/0g-chain/x/dasigners/v1/keeper"
+	dasignerstypes "github.com/0glabs/0g-chain/x/dasigners/v1/types"
 	evmutil "github.com/0glabs/0g-chain/x/evmutil"
 	evmutilkeeper "github.com/0glabs/0g-chain/x/evmutil/keeper"
 	evmutiltypes "github.com/0glabs/0g-chain/x/evmutil/types"
@@ -130,6 +134,9 @@ import (
 	validatorvesting "github.com/0glabs/0g-chain/x/validator-vesting"
 	validatorvestingrest "github.com/0glabs/0g-chain/x/validator-vesting/client/rest"
 	validatorvestingtypes "github.com/0glabs/0g-chain/x/validator-vesting/types"
+
+	"github.com/ethereum/go-ethereum/common"
+	"github.com/ethereum/go-ethereum/core/vm"
 )
 
 var (
@@ -190,6 +197,7 @@ var (
 		metrics.AppModuleBasic{},
 		consensus.AppModuleBasic{},
 		council.AppModuleBasic{},
+		dasigners.AppModuleBasic{},
 	)
 
 	// module account permissions
@@ -292,7 +300,9 @@ type App struct {
 	// liquidKeeper          liquidkeeper.Keeper
 	// earnKeeper            earnkeeper.Keeper
 	// routerKeeper          routerkeeper.Keeper
-	mintKeeper mintkeeper.Keeper
+	vestingKeeper   vestingkeeper.VestingKeeper
+	mintKeeper      mintkeeper.Keeper
+	dasignersKeeper dasignerskeeper.Keeper
 	// communityKeeper       communitykeeper.Keeper
 	consensusParamsKeeper consensusparamkeeper.Keeper
 
@@ -352,6 +362,8 @@ func NewApp(
 		consensusparamtypes.StoreKey, crisistypes.StoreKey,
 
 		counciltypes.StoreKey,
+		dasignerstypes.StoreKey,
+		vestingtypes.StoreKey,
 	)
 	tkeys := sdk.NewTransientStoreKeys(paramstypes.TStoreKey, evmtypes.TransientKey, feemarkettypes.TransientKey)
 	memKeys := sdk.NewMemoryStoreKeys(capabilitytypes.MemStoreKey)
@@ -428,11 +440,15 @@ func NewApp(
 		app.loadBlockedMaccAddrs(),
 		govAuthAddrStr,
 	)
+
+	app.vestingKeeper = vestingkeeper.NewVestingKeeper(app.accountKeeper, app.bankKeeper, keys[vestingtypes.StoreKey])
+
 	app.stakingKeeper = stakingkeeper.NewKeeper(
 		appCodec,
 		keys[stakingtypes.StoreKey],
 		app.accountKeeper,
 		app.bankKeeper,
+		app.vestingKeeper,
 		govAuthAddrStr,
 	)
 	app.authzKeeper = authzkeeper.NewKeeper(
@@ -507,14 +523,23 @@ func NewApp(
 	)
 
 	evmBankKeeper := evmutilkeeper.NewEvmBankKeeper(app.evmutilKeeper, app.bankKeeper, app.accountKeeper)
+	// dasigners keeper
+	app.dasignersKeeper = dasignerskeeper.NewKeeper(keys[dasignerstypes.StoreKey], appCodec, app.stakingKeeper)
+	// precopmiles
+	precompiles := make(map[common.Address]vm.PrecompiledContract)
+	daSignersPrecompile, err := dasignersprecompile.NewDASignersPrecompile(app.dasignersKeeper)
+	if err != nil {
+		panic("initialize precompile failed")
+	}
+	precompiles[daSignersPrecompile.Address()] = daSignersPrecompile
+	// evm keeper
 	app.evmKeeper = evmkeeper.NewKeeper(
 		appCodec, keys[evmtypes.StoreKey], tkeys[evmtypes.TransientKey],
 		govAuthAddr,
 		app.accountKeeper, evmBankKeeper, app.stakingKeeper, app.feeMarketKeeper,
-		nil, // precompiled contracts
-		geth.NewEVM,
 		options.EVMTrace,
 		evmSubspace,
+		precompiles,
 	)
 
 	app.evmutilKeeper.SetEvmKeeper(app.evmKeeper)
@@ -795,7 +820,7 @@ func NewApp(
 		upgrade.NewAppModule(&app.upgradeKeeper),
 		evidence.NewAppModule(app.evidenceKeeper),
 		transferModule,
-		vesting.NewAppModule(app.accountKeeper, app.bankKeeper),
+		vesting.NewAppModule(app.accountKeeper, app.bankKeeper, app.vestingKeeper),
 		authzmodule.NewAppModule(appCodec, app.authzKeeper, app.accountKeeper, app.bankKeeper, app.interfaceRegistry),
 		// kavadist.NewAppModule(app.kavadistKeeper, app.accountKeeper),
 		// auction.NewAppModule(app.auctionKeeper, app.accountKeeper, app.bankKeeper),
@@ -819,6 +844,7 @@ func NewApp(
 		metrics.NewAppModule(options.TelemetryOptions),
 
 		council.NewAppModule(app.CouncilKeeper, app.stakingKeeper),
+		dasigners.NewAppModule(app.dasignersKeeper, app.stakingKeeper),
 	)
 
 	// Warning: Some begin blockers must run before others. Ensure the dependencies are understood before modifying this list.
@@ -876,6 +902,7 @@ func NewApp(
 		packetforwardtypes.ModuleName,
 
 		counciltypes.ModuleName,
+		dasignerstypes.ModuleName,
 	)
 
 	// Warning: Some end blockers must run before others. Ensure the dependencies are understood before modifying this list.
@@ -923,6 +950,7 @@ func NewApp(
 		packetforwardtypes.ModuleName,
 
 		counciltypes.ModuleName,
+		dasignerstypes.ModuleName,
 	)
 
 	// Warning: Some init genesis methods must run before others. Ensure the dependencies are understood before modifying this list
@@ -968,6 +996,7 @@ func NewApp(
 		packetforwardtypes.ModuleName,
 
 		counciltypes.ModuleName,
+		dasignerstypes.ModuleName,
 
 		crisistypes.ModuleName, // runs the invariants at genesis, should run after other modules
 	)
