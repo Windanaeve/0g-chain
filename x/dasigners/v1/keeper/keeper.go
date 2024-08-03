@@ -2,6 +2,10 @@ package keeper
 
 import (
 	"encoding/hex"
+	"fmt"
+	"math/big"
+
+	"cosmossdk.io/math"
 
 	"github.com/cometbft/cometbft/libs/log"
 	"github.com/cosmos/cosmos-sdk/codec"
@@ -10,6 +14,7 @@ import (
 	sdk "github.com/cosmos/cosmos-sdk/types"
 
 	"github.com/0glabs/0g-chain/x/dasigners/v1/types"
+	stakingtypes "github.com/cosmos/cosmos-sdk/x/staking/types"
 )
 
 type Keeper struct {
@@ -194,5 +199,44 @@ func (k Keeper) SetRegistration(ctx sdk.Context, epoch uint64, account string, s
 		return err
 	}
 	store.Set(key, signature)
+	return nil
+}
+
+func (k Keeper) GetDelegatorBonded(ctx sdk.Context, delegator sdk.AccAddress) math.Int {
+	bonded := sdk.ZeroDec()
+
+	cnt := 0
+	k.stakingKeeper.IterateDelegatorDelegations(ctx, delegator, func(delegation stakingtypes.Delegation) bool {
+		validatorAddr, err := sdk.ValAddressFromBech32(delegation.ValidatorAddress)
+		if err != nil {
+			panic(err) // shouldn't happen
+		}
+		validator, found := k.stakingKeeper.GetValidator(ctx, validatorAddr)
+		if found {
+			shares := delegation.Shares
+			tokens := validator.TokensFromSharesTruncated(shares)
+			bonded = bonded.Add(tokens)
+		}
+		cnt += 1
+		return cnt > 10
+	})
+	return bonded.RoundInt()
+}
+
+func (k Keeper) CheckDelegations(ctx sdk.Context, account string) error {
+	accAddr, err := sdk.AccAddressFromHexUnsafe(account)
+	if err != nil {
+		return err
+	}
+	bonded := k.GetDelegatorBonded(ctx, accAddr)
+	fmt.Printf("delegation: %v\n", bonded)
+	params := k.GetParams(ctx)
+	tokensPerVote, ok := sdk.NewIntFromString(params.TokensPerVote)
+	if !ok {
+		panic("failed to load params tokens_per_vote")
+	}
+	if bonded.Quo(sdk.NewInt(1_000_000_000_000_000_000)).Quo(tokensPerVote).Abs().BigInt().Cmp(big.NewInt(0)) <= 0 {
+		return types.ErrInsufficientBonded
+	}
 	return nil
 }
