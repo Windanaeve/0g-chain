@@ -52,7 +52,7 @@ func TelemetryOptionsFromAppOpts(appOpts servertypes.AppOptions) TelemetryOption
 type Metrics struct {
 	// The height of the latest block.
 	// This gauges exactly emulates the default blocksync metric in CometBFT v0.38+
-	// It should be removed when kava has been updated to CometBFT v0.38+.
+	// It should be removed when 0g-chain has been updated to CometBFT v0.38+.
 	// see https://github.com/cometbft/cometbft/blob/v0.38.0-rc3/blocksync/metrics.gen.go
 	LatestBlockHeight metrics.Gauge
 }

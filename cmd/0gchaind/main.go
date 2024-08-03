@@ -6,14 +6,13 @@ import (
 	"github.com/cosmos/cosmos-sdk/server"
 	svrcmd "github.com/cosmos/cosmos-sdk/server/cmd"
 
-	"github.com/0glabs/0g-chain/app"
 	"github.com/0glabs/0g-chain/chaincfg"
 )
 
 func main() {
 	rootCmd := NewRootCmd()
 
-	if err := svrcmd.Execute(rootCmd, chaincfg.EnvPrefix, app.DefaultNodeHome); err != nil {
+	if err := svrcmd.Execute(rootCmd, chaincfg.EnvPrefix, chaincfg.DefaultNodeHome); err != nil {
 		switch e := err.(type) {
 		case server.ErrorCode:
 			os.Exit(e.Code)

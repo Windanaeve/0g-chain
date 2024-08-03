@@ -31,7 +31,7 @@ import (
 	pricefeedtypes "github.com/0glabs/0g-chain/x/pricefeed/types"
 )
 
-// QueryClient is a wrapper with all Cosmos and Kava grpc query clients
+// QueryClient is a wrapper with all Cosmos and 0gchaind grpc query clients
 type QueryClient struct {
 	// cosmos-sdk query clients
 
@@ -58,7 +58,7 @@ type QueryClient struct {
 	IbcClient   ibcclienttypes.QueryClient
 	IbcTransfer ibctransfertypes.QueryClient
 
-	// kava module query clients
+	// 0gchaind module query clients
 
 	// Auction   auctiontypes.QueryClient
 	Bep3 bep3types.QueryClient

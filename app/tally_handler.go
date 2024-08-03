@@ -12,7 +12,7 @@ import (
 
 var _ govv1.TallyHandler = TallyHandler{}
 
-// TallyHandler is the tally handler for kava
+// TallyHandler is the tally handler for 0gchaind
 type TallyHandler struct {
 	gk  govkeeper.Keeper
 	stk stakingkeeper.Keeper

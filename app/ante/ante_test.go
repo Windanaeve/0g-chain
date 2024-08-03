@@ -6,6 +6,8 @@ import (
 	"testing"
 	"time"
 
+	"github.com/0glabs/0g-chain/chaincfg"
+
 	sdkmath "cosmossdk.io/math"
 	tmdb "github.com/cometbft/cometbft-db"
 	abci "github.com/cometbft/cometbft/abci/types"
@@ -28,7 +30,7 @@ import (
 )
 
 func TestMain(m *testing.M) {
-	app.SetSDKConfig()
+	chaincfg.SetSDKConfig()
 	os.Exit(m.Run())
 }
 
@@ -53,7 +55,7 @@ func TestAppAnteHandler_AuthorizedMempool(t *testing.T) {
 		App: *app.NewApp(
 			log.NewNopLogger(),
 			tmdb.NewMemDB(),
-			app.DefaultNodeHome,
+			chaincfg.DefaultNodeHome,
 			nil,
 			encodingConfig,
 			opts,
@@ -67,7 +69,7 @@ func TestAppAnteHandler_AuthorizedMempool(t *testing.T) {
 		chainID,
 		app.NewFundedGenStateWithSameCoins(
 			tApp.AppCodec(),
-			sdk.NewCoins(sdk.NewInt64Coin("ukava", 1e9)),
+			sdk.NewCoins(sdk.NewInt64Coin(chaincfg.DisplayDenom, 1e9)),
 			testAddresses,
 		),
 		newBep3GenStateMulti(tApp.AppCodec(), deputy),
@@ -115,7 +117,7 @@ func TestAppAnteHandler_AuthorizedMempool(t *testing.T) {
 					banktypes.NewMsgSend(
 						tc.address,
 						testAddresses[0],
-						sdk.NewCoins(sdk.NewInt64Coin("ukava", 1_000_000)),
+						sdk.NewCoins(sdk.NewInt64Coin(chaincfg.DisplayDenom, 1_000_000)),
 					),
 				},
 				sdk.NewCoins(), // no fee

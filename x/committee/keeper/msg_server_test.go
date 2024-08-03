@@ -12,6 +12,7 @@ import (
 	upgradetypes "github.com/cosmos/cosmos-sdk/x/upgrade/types"
 
 	"github.com/0glabs/0g-chain/app"
+	"github.com/0glabs/0g-chain/chaincfg"
 	"github.com/0glabs/0g-chain/x/committee/keeper"
 	"github.com/0glabs/0g-chain/x/committee/types"
 )
@@ -61,7 +62,7 @@ func (suite *MsgServerTestSuite) SetupTest() {
 		[]types.Proposal{},
 		[]types.Vote{},
 	)
-	suite.communityPoolAmt = sdk.NewCoins(sdk.NewCoin("ukava", sdkmath.NewInt(1000)))
+	suite.communityPoolAmt = sdk.NewCoins(sdk.NewCoin(chaincfg.DisplayDenom, sdkmath.NewInt(1000)))
 	suite.app.InitializeFromGenesisStates(
 		app.GenesisState{types.ModuleName: cdc.MustMarshalJSON(testGenesis)},
 		// TODO: not used?

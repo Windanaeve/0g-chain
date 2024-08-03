@@ -3,6 +3,7 @@ package e2e_test
 import (
 	"time"
 
+	"github.com/0glabs/0g-chain/chaincfg"
 	tmproto "github.com/cometbft/cometbft/proto/tendermint/types"
 	tmtypes "github.com/cometbft/cometbft/types"
 	sdk "github.com/cosmos/cosmos-sdk/types"
@@ -13,11 +14,11 @@ import (
 func (suite *IntegrationTestSuite) TestUpgradeParams_SDK() {
 	suite.SkipIfUpgradeDisabled()
 
-	beforeUpgradeCtx := suite.Kava.Grpc.CtxAtHeight(suite.UpgradeHeight - 1)
-	afterUpgradeCtx := suite.Kava.Grpc.CtxAtHeight(suite.UpgradeHeight)
+	beforeUpgradeCtx := suite.ZgChain.Grpc.CtxAtHeight(suite.UpgradeHeight - 1)
+	afterUpgradeCtx := suite.ZgChain.Grpc.CtxAtHeight(suite.UpgradeHeight)
 
 	// Before params
-	grpcClient := suite.Kava.Grpc
+	grpcClient := suite.ZgChain.Grpc
 	govParamsBefore, err := grpcClient.Query.Gov.Params(beforeUpgradeCtx, &govtypes.QueryParamsRequest{
 		ParamsType: govtypes.ParamDeposit,
 	})
@@ -47,13 +48,13 @@ func (suite *IntegrationTestSuite) TestUpgradeParams_SDK() {
 			"x/gov DepositParams max deposit period after upgrade should be 172800s",
 		)
 		suite.Assert().Equal(
-			[]sdk.Coin{{Denom: "ukava", Amount: sdk.NewInt(10_000_000)}},
+			[]sdk.Coin{{Denom: chaincfg.DisplayDenom, Amount: sdk.NewInt(10_000_000)}},
 			govParamsAfter.DepositParams.MinDeposit,
 			"x/gov DepositParams min deposit after upgrade should be 10_000_000 ukava",
 		)
 
 		expectedParams := govtypes.Params{
-			MinDeposit:                 sdk.NewCoins(sdk.NewCoin("ukava", sdk.NewInt(10_000_000))),
+			MinDeposit:                 sdk.NewCoins(sdk.NewCoin(chaincfg.DisplayDenom, sdk.NewInt(10_000_000))),
 			MaxDepositPeriod:           mustParseDuration("172800s"),
 			VotingPeriod:               mustParseDuration("30s"),
 			Quorum:                     "0.334000000000000000",
@@ -71,9 +72,9 @@ func (suite *IntegrationTestSuite) TestUpgradeParams_SDK() {
 func (suite *IntegrationTestSuite) TestUpgradeParams_Consensus() {
 	suite.SkipIfUpgradeDisabled()
 
-	afterUpgradeCtx := suite.Kava.Grpc.CtxAtHeight(suite.UpgradeHeight)
+	afterUpgradeCtx := suite.ZgChain.Grpc.CtxAtHeight(suite.UpgradeHeight)
 
-	grpcClient := suite.Kava.Grpc
+	grpcClient := suite.ZgChain.Grpc
 	paramsAfter, err := grpcClient.Query.Consensus.Params(afterUpgradeCtx, &consensustypes.QueryParamsRequest{})
 	suite.NoError(err)
 

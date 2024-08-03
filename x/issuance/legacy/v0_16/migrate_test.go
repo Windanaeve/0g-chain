@@ -10,6 +10,7 @@ import (
 	"github.com/stretchr/testify/suite"
 
 	app "github.com/0glabs/0g-chain/app"
+	"github.com/0glabs/0g-chain/chaincfg"
 	v015issuance "github.com/0glabs/0g-chain/x/issuance/legacy/v0_15"
 	v016issuance "github.com/0glabs/0g-chain/x/issuance/types"
 )
@@ -24,7 +25,7 @@ type migrateTestSuite struct {
 }
 
 func (s *migrateTestSuite) SetupTest() {
-	app.SetSDKConfig()
+	chaincfg.SetSDKConfig()
 
 	s.v15genstate = v015issuance.GenesisState{
 		Params:   v015issuance.Params{},
@@ -50,7 +51,7 @@ func (s *migrateTestSuite) TestMigrate_JSON() {
 					"blockable": true,
 					"blocked_addresses": null,
 					"denom": "hbtc",
-					"owner": "kava1dmm9zpdnm6mfhywzt9sstm4p33y0cnsd0m673z",
+					"owner": "0g1dmm9zpdnm6mfhywzt9sstm4p33y0cnsd0m673z",
 					"paused": false,
 					"rate_limit": {
 						"active": false,
@@ -62,7 +63,7 @@ func (s *migrateTestSuite) TestMigrate_JSON() {
 		},
 		"supplies": [
 			{
-				"current_supply": { "denom": "ukava", "amount": "100" },
+				"current_supply": { "denom": "neuron", "amount": "100000000000000" },
 				"time_elapsed": "3600000000000"
 			},
 			{
@@ -83,7 +84,7 @@ func (s *migrateTestSuite) TestMigrate_JSON() {
 					"blockable": true,
 					"blocked_addresses": [],
 					"denom": "hbtc",
-					"owner": "kava1dmm9zpdnm6mfhywzt9sstm4p33y0cnsd0m673z",
+					"owner": "0g1dmm9zpdnm6mfhywzt9sstm4p33y0cnsd0m673z",
 					"paused": false,
 					"rate_limit": {
 						"active": false,
@@ -95,7 +96,7 @@ func (s *migrateTestSuite) TestMigrate_JSON() {
 		},
 		"supplies": [
 			{
-				"current_supply": { "denom": "ukava", "amount": "100" },
+				"current_supply": { "denom": "neuron", "amount": "100000000000000" },
 				"time_elapsed": "3600s"
 			},
 			{
@@ -114,7 +115,7 @@ func (s *migrateTestSuite) TestMigrate_Params() {
 		Assets: v015issuance.Assets{
 			{
 				Owner:            s.addresses[0],
-				Denom:            "ukava",
+				Denom:            "neuron",
 				BlockedAddresses: s.addresses[1:2],
 				Paused:           true,
 				Blockable:        true,
@@ -130,7 +131,7 @@ func (s *migrateTestSuite) TestMigrate_Params() {
 		Assets: []v016issuance.Asset{
 			{
 				Owner:            s.addresses[0].String(),
-				Denom:            "ukava",
+				Denom:            "neuron",
 				BlockedAddresses: []string{s.addresses[1].String()},
 				Paused:           true,
 				Blockable:        true,
@@ -149,7 +150,7 @@ func (s *migrateTestSuite) TestMigrate_Params() {
 func (s *migrateTestSuite) TestMigrate_Supplies() {
 	s.v15genstate.Supplies = v015issuance.AssetSupplies{
 		{
-			CurrentSupply: sdk.NewCoin("ukava", sdkmath.NewInt(100)),
+			CurrentSupply: sdk.NewCoin("neuron", sdkmath.NewInt(100000000000000)),
 			TimeElapsed:   time.Duration(1 * time.Hour),
 		},
 		{
@@ -159,7 +160,7 @@ func (s *migrateTestSuite) TestMigrate_Supplies() {
 	}
 	expected := []v016issuance.AssetSupply{
 		{
-			CurrentSupply: sdk.NewCoin("ukava", sdkmath.NewInt(100)),
+			CurrentSupply: sdk.NewCoin("neuron", sdkmath.NewInt(100000000000000)),
 			TimeElapsed:   time.Duration(1 * time.Hour),
 		},
 		{

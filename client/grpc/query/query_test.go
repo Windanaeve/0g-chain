@@ -54,7 +54,7 @@ func TestNewQueryClient_ValidClient(t *testing.T) {
 		require.NotNil(t, client.IbcClient)
 		require.NotNil(t, client.IbcTransfer)
 
-		// validate kava clients
+		// validate 0gchaind clients
 		// require.NotNil(t, client.Auction)
 		require.NotNil(t, client.Bep3)
 		// require.NotNil(t, client.Cdp)
