@@ -5,8 +5,6 @@ import (
 	"testing"
 	"time"
 
-	"github.com/0glabs/0g-chain/chaincfg"
-
 	"github.com/cosmos/cosmos-sdk/testutil/sims"
 	sdk "github.com/cosmos/cosmos-sdk/types"
 	banktypes "github.com/cosmos/cosmos-sdk/x/bank/types"
@@ -47,7 +45,7 @@ func TestAuthenticatedMempoolDecorator_AnteHandle_NotCheckTx(t *testing.T) {
 			banktypes.NewMsgSend(
 				testAddresses[0],
 				testAddresses[1],
-				sdk.NewCoins(sdk.NewInt64Coin(chaincfg.DisplayDenom, 100_000_000)),
+				sdk.NewCoins(sdk.NewInt64Coin("ua0gi", 100_000_000)),
 			),
 		},
 		sdk.NewCoins(), // no fee
@@ -82,12 +80,12 @@ func TestAuthenticatedMempoolDecorator_AnteHandle_Pass(t *testing.T) {
 			banktypes.NewMsgSend(
 				testAddresses[0],
 				testAddresses[1],
-				sdk.NewCoins(sdk.NewInt64Coin(chaincfg.DisplayDenom, 100_000_000)),
+				sdk.NewCoins(sdk.NewInt64Coin("ua0gi", 100)),
 			),
 			banktypes.NewMsgSend(
 				testAddresses[2],
 				testAddresses[1],
-				sdk.NewCoins(sdk.NewInt64Coin(chaincfg.DisplayDenom, 100_000_000)),
+				sdk.NewCoins(sdk.NewInt64Coin("ua0gi", 100)),
 			),
 		},
 		sdk.NewCoins(), // no fee
@@ -123,7 +121,7 @@ func TestAuthenticatedMempoolDecorator_AnteHandle_Reject(t *testing.T) {
 			banktypes.NewMsgSend(
 				testAddresses[0],
 				testAddresses[1],
-				sdk.NewCoins(sdk.NewInt64Coin(chaincfg.DisplayDenom, 100_000_000)),
+				sdk.NewCoins(sdk.NewInt64Coin("ua0gi", 100)),
 			),
 		},
 		sdk.NewCoins(), // no fee

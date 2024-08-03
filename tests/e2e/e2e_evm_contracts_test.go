@@ -13,7 +13,6 @@ import (
 	"github.com/0glabs/0g-chain/app"
 	evmutiltypes "github.com/0glabs/0g-chain/x/evmutil/types"
 
-	"github.com/0glabs/0g-chain/chaincfg"
 	"github.com/0glabs/0g-chain/tests/e2e/contracts/greeter"
 	"github.com/0glabs/0g-chain/tests/util"
 )
@@ -100,7 +99,7 @@ func (suite *IntegrationTestSuite) TestEip712BasicMessageAuthorization() {
 	// check that the message was processed & the a0gi is transferred.
 	balRes, err := suite.ZgChain.Grpc.Query.Bank.Balance(context.Background(), &banktypes.QueryBalanceRequest{
 		Address: receiver.String(),
-		Denom:   chaincfg.DisplayDenom,
+		Denom:   "ua0gi",
 	})
 	suite.NoError(err)
 	suite.Equal(sdk.NewInt(1e3), balRes.Balance.Amount)
