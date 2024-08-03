@@ -61,7 +61,7 @@ jobs:
       - name: checkout kava bridge repo for deploying evm contracts
         uses: actions/checkout@v4
         with:
-          repository: Kava-Labs/kava-bridge
+          repository: 0glabs/0g-chain-bridge
           path: kava-bridge
           ref: main
       - name: install nodeJS
@@ -77,7 +77,7 @@ jobs:
         run: make compile-contracts
         working-directory: kava-bridge
       - name: download seed script from current commit
-        run: wget https://raw.githubusercontent.com/Kava-Labs/kava/${GITHUB_SHA}/.github/scripts/${SEED_SCRIPT_FILENAME} && chmod +x ${SEED_SCRIPT_FILENAME}
+        run: wget https://raw.githubusercontent.com/0glabs/0g-chain/${GITHUB_SHA}/.github/scripts/${SEED_SCRIPT_FILENAME} && chmod +x ${SEED_SCRIPT_FILENAME}
         working-directory: kava-bridge/contract
         env:
           SEED_SCRIPT_FILENAME: ${{ inputs.seed-script-filename }}

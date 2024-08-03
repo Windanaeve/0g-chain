@@ -3,12 +3,12 @@ package e2e_test
 import (
 	"time"
 
+	cdptypes "github.com/0glabs/0g-chain/x/cdp/types"
 	tmproto "github.com/cometbft/cometbft/proto/tendermint/types"
 	tmtypes "github.com/cometbft/cometbft/types"
 	sdk "github.com/cosmos/cosmos-sdk/types"
 	consensustypes "github.com/cosmos/cosmos-sdk/x/consensus/types"
 	govtypes "github.com/cosmos/cosmos-sdk/x/gov/types/v1"
-	cdptypes "github.com/kava-labs/kava/x/cdp/types"
 )
 
 func (suite *IntegrationTestSuite) TestUpgradeParams_SDK() {
