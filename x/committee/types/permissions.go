@@ -6,7 +6,6 @@ import (
 	"reflect"
 	"strings"
 
-	communitytypes "github.com/0glabs/0g-chain/x/community/types"
 	"github.com/cosmos/cosmos-sdk/codec/types"
 	sdk "github.com/cosmos/cosmos-sdk/types"
 	govv1beta1 "github.com/cosmos/cosmos-sdk/x/gov/types/v1beta1"
@@ -54,9 +53,9 @@ var (
 	_ Permission = TextPermission{}
 	_ Permission = SoftwareUpgradePermission{}
 	_ Permission = ParamsChangePermission{}
-	_ Permission = CommunityCDPRepayDebtPermission{}
-	_ Permission = CommunityPoolLendWithdrawPermission{}
-	_ Permission = CommunityCDPWithdrawCollateralPermission{}
+	// _ Permission = CommunityCDPRepayDebtPermission{}
+	// _ Permission = CommunityPoolLendWithdrawPermission{}
+	// _ Permission = CommunityCDPWithdrawCollateralPermission{}
 )
 
 // Allows implement permission interface for GodPermission.
@@ -74,23 +73,23 @@ func (SoftwareUpgradePermission) Allows(_ sdk.Context, _ ParamKeeper, p PubPropo
 	return ok
 }
 
-// Allows implement permission interface for CommunityCDPRepayDebtPermission.
-func (CommunityCDPRepayDebtPermission) Allows(_ sdk.Context, _ ParamKeeper, p PubProposal) bool {
-	_, ok := p.(*communitytypes.CommunityCDPRepayDebtProposal)
-	return ok
-}
+// // Allows implement permission interface for CommunityCDPRepayDebtPermission.
+// func (CommunityCDPRepayDebtPermission) Allows(_ sdk.Context, _ ParamKeeper, p PubProposal) bool {
+// 	_, ok := p.(*communitytypes.CommunityCDPRepayDebtProposal)
+// 	return ok
+// }
 
-// Allows implement permission interface for CommunityCDPWithdrawCollateralPermission.
-func (CommunityCDPWithdrawCollateralPermission) Allows(_ sdk.Context, _ ParamKeeper, p PubProposal) bool {
-	_, ok := p.(*communitytypes.CommunityCDPWithdrawCollateralProposal)
-	return ok
-}
+// // Allows implement permission interface for CommunityCDPWithdrawCollateralPermission.
+// func (CommunityCDPWithdrawCollateralPermission) Allows(_ sdk.Context, _ ParamKeeper, p PubProposal) bool {
+// 	_, ok := p.(*communitytypes.CommunityCDPWithdrawCollateralProposal)
+// 	return ok
+// }
 
-// Allows implement permission interface for CommunityPoolLendWithdrawPermission.
-func (CommunityPoolLendWithdrawPermission) Allows(_ sdk.Context, _ ParamKeeper, p PubProposal) bool {
-	_, ok := p.(*communitytypes.CommunityPoolLendWithdrawProposal)
-	return ok
-}
+// // Allows implement permission interface for CommunityPoolLendWithdrawPermission.
+// func (CommunityPoolLendWithdrawPermission) Allows(_ sdk.Context, _ ParamKeeper, p PubProposal) bool {
+// 	_, ok := p.(*communitytypes.CommunityPoolLendWithdrawProposal)
+// 	return ok
+// }
 
 // Allows implement permission interface for ParamsChangePermission.
 func (perm ParamsChangePermission) Allows(ctx sdk.Context, pk ParamKeeper, p PubProposal) bool {

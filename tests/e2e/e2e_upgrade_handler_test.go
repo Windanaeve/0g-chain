@@ -3,7 +3,6 @@ package e2e_test
 import (
 	"time"
 
-	cdptypes "github.com/0glabs/0g-chain/x/cdp/types"
 	tmproto "github.com/cometbft/cometbft/proto/tendermint/types"
 	tmtypes "github.com/cometbft/cometbft/types"
 	sdk "github.com/cosmos/cosmos-sdk/types"
@@ -99,25 +98,25 @@ func (suite *IntegrationTestSuite) TestUpgradeParams_Consensus() {
 	suite.Require().Equal(expectedParams, *paramsAfter.Params, "x/consensus params after upgrade should be as expected")
 }
 
-func (suite *IntegrationTestSuite) TestUpgradeParams_CDP_Interval() {
-	suite.SkipIfUpgradeDisabled()
+// func (suite *IntegrationTestSuite) TestUpgradeParams_CDP_Interval() {
+// 	suite.SkipIfUpgradeDisabled()
 
-	beforeUpgradeCtx := suite.Kava.Grpc.CtxAtHeight(suite.UpgradeHeight - 1)
-	afterUpgradeCtx := suite.Kava.Grpc.CtxAtHeight(suite.UpgradeHeight)
+// 	beforeUpgradeCtx := suite.Kava.Grpc.CtxAtHeight(suite.UpgradeHeight - 1)
+// 	afterUpgradeCtx := suite.Kava.Grpc.CtxAtHeight(suite.UpgradeHeight)
 
-	grpcClient := suite.Kava.Grpc
+// 	grpcClient := suite.Kava.Grpc
 
-	paramsBefore, err := grpcClient.Query.Cdp.Params(beforeUpgradeCtx, &cdptypes.QueryParamsRequest{})
-	suite.Require().NoError(err)
-	paramsAfter, err := grpcClient.Query.Cdp.Params(afterUpgradeCtx, &cdptypes.QueryParamsRequest{})
-	suite.Require().NoError(err)
+// 	paramsBefore, err := grpcClient.Query.Cdp.Params(beforeUpgradeCtx, &cdptypes.QueryParamsRequest{})
+// 	suite.Require().NoError(err)
+// 	paramsAfter, err := grpcClient.Query.Cdp.Params(afterUpgradeCtx, &cdptypes.QueryParamsRequest{})
+// 	suite.Require().NoError(err)
 
-	expectedParams := paramsBefore.Params
-	expectedParams.LiquidationBlockInterval = int64(50)
+// 	expectedParams := paramsBefore.Params
+// 	expectedParams.LiquidationBlockInterval = int64(50)
 
-	suite.Require().Equal(expectedParams, paramsAfter.Params,
-		"expected cdp parameters to equal previous parameters with a liquidation block interval of 100")
-}
+// 	suite.Require().Equal(expectedParams, paramsAfter.Params,
+// 		"expected cdp parameters to equal previous parameters with a liquidation block interval of 100")
+// }
 
 func mustParseDuration(s string) *time.Duration {
 	d, err := time.ParseDuration(s)
