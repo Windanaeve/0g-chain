@@ -10,6 +10,8 @@ import (
 )
 
 func main() {
+	chaincfg.SetSDKConfig().Seal()
+
 	rootCmd := NewRootCmd()
 
 	if err := svrcmd.Execute(rootCmd, chaincfg.EnvPrefix, chaincfg.DefaultNodeHome); err != nil {
