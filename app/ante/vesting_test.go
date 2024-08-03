@@ -5,8 +5,6 @@ import (
 	"testing"
 	"time"
 
-	"github.com/0glabs/0g-chain/chaincfg"
-
 	"github.com/stretchr/testify/require"
 
 	"github.com/cosmos/cosmos-sdk/testutil/sims"

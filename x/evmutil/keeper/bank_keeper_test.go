@@ -678,7 +678,7 @@ func (suite *evmBankKeeperTestSuite) TestConvertOneA0giToNeuronIfNeeded() {
 			suite.SetupTest()
 
 			suite.FundAccountWithZgChain(suite.Addrs[0], tt.startingCoins)
-			err := suite.EvmBankKeeper.ConvertOneA0giToNeuronIfNeeded(suite.Ctx, suite.Addrs[0], neuronNeeded)
+			err := suite.EvmBankKeeper.ConvertOneUa0giToNeuronIfNeeded(suite.Ctx, suite.Addrs[0], neuronNeeded)
 			moduleZgChain := suite.BankKeeper.GetBalance(suite.Ctx, suite.AccountKeeper.GetModuleAddress(types.ModuleName), chaincfg.DisplayDenom)
 			if tt.success {
 				suite.Require().NoError(err)
@@ -726,7 +726,7 @@ func (suite *evmBankKeeperTestSuite) TestConvertNeuronToA0gi() {
 			err := suite.App.FundModuleAccount(suite.Ctx, types.ModuleName, sdk.NewCoins(sdk.NewInt64Coin(chaincfg.DisplayDenom, 10)))
 			suite.Require().NoError(err)
 			suite.FundAccountWithZgChain(suite.Addrs[0], tt.startingCoins)
-			err = suite.EvmBankKeeper.ConvertNeuronToA0gi(suite.Ctx, suite.Addrs[0])
+			err = suite.EvmBankKeeper.ConvertNeuronToUa0gi(suite.Ctx, suite.Addrs[0])
 			suite.Require().NoError(err)
 			neuron := suite.Keeper.GetBalance(suite.Ctx, suite.Addrs[0])
 			suite.Require().Equal(tt.expectedCoins.AmountOf(chaincfg.BaseDenom), neuron)
