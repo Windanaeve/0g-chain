@@ -115,9 +115,7 @@ import (
 	council "github.com/0glabs/0g-chain/x/council/v1"
 	councilkeeper "github.com/0glabs/0g-chain/x/council/v1/keeper"
 	counciltypes "github.com/0glabs/0g-chain/x/council/v1/types"
-	das "github.com/0glabs/0g-chain/x/das/v1"
-	daskeeper "github.com/0glabs/0g-chain/x/das/v1/keeper"
-	dastypes "github.com/0glabs/0g-chain/x/das/v1/types"
+
 	evmutil "github.com/0glabs/0g-chain/x/evmutil"
 	evmutilkeeper "github.com/0glabs/0g-chain/x/evmutil/keeper"
 	evmutiltypes "github.com/0glabs/0g-chain/x/evmutil/types"
@@ -192,7 +190,6 @@ var (
 		metrics.AppModuleBasic{},
 		consensus.AppModuleBasic{},
 		council.AppModuleBasic{},
-		das.AppModuleBasic{},
 	)
 
 	// module account permissions
@@ -300,7 +297,6 @@ type App struct {
 	consensusParamsKeeper consensusparamkeeper.Keeper
 
 	CouncilKeeper councilkeeper.Keeper
-	DasKeeper     daskeeper.Keeper
 
 	// make scoped keepers public for test purposes
 	ScopedIBCKeeper      capabilitykeeper.ScopedKeeper
@@ -356,7 +352,6 @@ func NewApp(
 		consensusparamtypes.StoreKey, crisistypes.StoreKey,
 
 		counciltypes.StoreKey,
-		dastypes.StoreKey,
 	)
 	tkeys := sdk.NewTransientStoreKeys(paramstypes.TStoreKey, evmtypes.TransientKey, feemarkettypes.TransientKey)
 	memKeys := sdk.NewMemoryStoreKeys(capabilitytypes.MemStoreKey)
@@ -778,7 +773,6 @@ func NewApp(
 	app.CouncilKeeper = councilkeeper.NewKeeper(
 		keys[counciltypes.StoreKey], appCodec, app.stakingKeeper,
 	)
-	app.DasKeeper = daskeeper.NewKeeper(keys[dastypes.StoreKey], appCodec, app.stakingKeeper)
 
 	// create the module manager (Note: Any module instantiated in the module manager that is later modified
 	// must be passed by reference here.)
@@ -825,7 +819,6 @@ func NewApp(
 		metrics.NewAppModule(options.TelemetryOptions),
 
 		council.NewAppModule(app.CouncilKeeper, app.stakingKeeper),
-		das.NewAppModule(app.DasKeeper),
 	)
 
 	// Warning: Some begin blockers must run before others. Ensure the dependencies are understood before modifying this list.
@@ -883,7 +876,6 @@ func NewApp(
 		packetforwardtypes.ModuleName,
 
 		counciltypes.ModuleName,
-		dastypes.ModuleName,
 	)
 
 	// Warning: Some end blockers must run before others. Ensure the dependencies are understood before modifying this list.
@@ -931,7 +923,6 @@ func NewApp(
 		packetforwardtypes.ModuleName,
 
 		counciltypes.ModuleName,
-		dastypes.ModuleName,
 	)
 
 	// Warning: Some init genesis methods must run before others. Ensure the dependencies are understood before modifying this list
@@ -977,7 +968,6 @@ func NewApp(
 		packetforwardtypes.ModuleName,
 
 		counciltypes.ModuleName,
-		dastypes.ModuleName,
 
 		crisistypes.ModuleName, // runs the invariants at genesis, should run after other modules
 	)

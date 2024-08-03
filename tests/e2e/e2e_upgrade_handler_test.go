@@ -3,7 +3,6 @@ package e2e_test
 import (
 	"time"
 
-	"github.com/0glabs/0g-chain/chaincfg"
 	tmproto "github.com/cometbft/cometbft/proto/tendermint/types"
 	tmtypes "github.com/cometbft/cometbft/types"
 	sdk "github.com/cosmos/cosmos-sdk/types"
@@ -48,13 +47,13 @@ func (suite *IntegrationTestSuite) TestUpgradeParams_SDK() {
 			"x/gov DepositParams max deposit period after upgrade should be 172800s",
 		)
 		suite.Assert().Equal(
-			[]sdk.Coin{{Denom: chaincfg.DisplayDenom, Amount: sdk.NewInt(10_000_000)}},
+			[]sdk.Coin{{Denom: "ua0gi", Amount: sdk.NewInt(10_000_000)}},
 			govParamsAfter.DepositParams.MinDeposit,
 			"x/gov DepositParams min deposit after upgrade should be 10_000_000 ukava",
 		)
 
 		expectedParams := govtypes.Params{
-			MinDeposit:                 sdk.NewCoins(sdk.NewCoin(chaincfg.DisplayDenom, sdk.NewInt(10_000_000))),
+			MinDeposit:                 sdk.NewCoins(sdk.NewCoin("ua0gi", sdk.NewInt(10_000_000))),
 			MaxDepositPeriod:           mustParseDuration("172800s"),
 			VotingPeriod:               mustParseDuration("30s"),
 			Quorum:                     "0.334000000000000000",

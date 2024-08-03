@@ -5,7 +5,6 @@ import (
 	"time"
 
 	sdkmath "cosmossdk.io/math"
-	"github.com/0glabs/0g-chain/chaincfg"
 	"github.com/0glabs/0g-chain/x/validator-vesting/types"
 	sdk "github.com/cosmos/cosmos-sdk/types"
 )
@@ -26,7 +25,7 @@ func (s queryServer) CirculatingSupply(c context.Context, req *types.QueryCircul
 	QueryCirculatingSupplyResponse, error) {
 	ctx := sdk.UnwrapSDKContext(c)
 
-	totalSupply := s.bk.GetSupply(ctx, chaincfg.DisplayDenom).Amount
+	totalSupply := s.bk.GetSupply(ctx, "ua0gi").Amount
 	supplyInt := getCirculatingSupply(ctx.BlockTime(), totalSupply)
 	return &types.QueryCirculatingSupplyResponse{
 		Amount: supplyInt,
@@ -37,7 +36,7 @@ func (s queryServer) CirculatingSupply(c context.Context, req *types.QueryCircul
 func (s queryServer) TotalSupply(c context.Context, req *types.QueryTotalSupplyRequest) (*types.QueryTotalSupplyResponse, error) {
 	ctx := sdk.UnwrapSDKContext(c)
 
-	totalSupply := s.bk.GetSupply(ctx, chaincfg.DisplayDenom).Amount
+	totalSupply := s.bk.GetSupply(ctx, "ua0gi").Amount
 	supplyInt := sdk.NewDecFromInt(totalSupply).Mul(sdk.MustNewDecFromStr("0.000001")).TruncateInt()
 	return &types.QueryTotalSupplyResponse{
 		Amount: supplyInt,

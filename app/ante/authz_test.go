@@ -5,8 +5,6 @@ import (
 	"testing"
 	"time"
 
-	"github.com/0glabs/0g-chain/chaincfg"
-
 	"github.com/cosmos/cosmos-sdk/testutil/sims"
 	sdk "github.com/cosmos/cosmos-sdk/types"
 	sdkerrors "github.com/cosmos/cosmos-sdk/types/errors"

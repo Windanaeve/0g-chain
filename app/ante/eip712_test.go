@@ -5,8 +5,6 @@ import (
 	"testing"
 	"time"
 
-	"github.com/0glabs/0g-chain/chaincfg"
-
 	sdkmath "cosmossdk.io/math"
 	"github.com/cosmos/cosmos-sdk/client"
 	codectypes "github.com/cosmos/cosmos-sdk/codec/types"

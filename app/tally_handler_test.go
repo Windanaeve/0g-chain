@@ -5,7 +5,6 @@ import (
 	"time"
 
 	sdkmath "cosmossdk.io/math"
-	"github.com/0glabs/0g-chain/chaincfg"
 	tmproto "github.com/cometbft/cometbft/proto/tendermint/types"
 	"github.com/cosmos/cosmos-sdk/crypto/keys/ed25519"
 	sdk "github.com/cosmos/cosmos-sdk/types"
@@ -44,7 +43,7 @@ func (suite *tallyHandlerSuite) SetupTest() {
 
 	stakingKeeper := *suite.app.GetStakingKeeper()
 	suite.staking = stakingHelper{stakingKeeper}
-	suite.staking.setBondDenom(suite.ctx, chaincfg.DisplayDenom)
+	suite.staking.setBondDenom(suite.ctx, "ua0gi")
 
 	suite.tallier = NewTallyHandler(
 		suite.app.GetGovKeeper(),
@@ -302,7 +301,7 @@ func (suite *tallyHandlerSuite) mintDerivative(owner sdk.AccAddress, validator s
 	// suite.Require().NoError(err)
 
 	// return minted
-	return sdk.NewCoin(chaincfg.DisplayDenom, amount)
+	return sdk.NewCoin("ua0gi", amount)
 }
 
 func (suite *tallyHandlerSuite) delegateToNewBondedValidator(delegator sdk.AccAddress, amount sdkmath.Int) stakingtypes.ValidatorI {
