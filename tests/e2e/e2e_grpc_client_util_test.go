@@ -1,15 +1,14 @@
 package e2e_test
 
 import (
-	"math/big"
-
+	"github.com/0glabs/0g-chain/chaincfg"
 	sdk "github.com/cosmos/cosmos-sdk/types"
 )
 
 func (suite *IntegrationTestSuite) TestGrpcClientUtil_Account() {
 	// ARRANGE
 	// setup 0g account
-	zgAcc := suite.ZgChain.NewFundedAccount("account-test", sdk.NewCoins(a0gi(big.NewInt(1e5))))
+	zgAcc := suite.ZgChain.NewFundedAccount("account-test", sdk.NewCoins(chaincfg.MakeCoinForGasDenom(1e5)))
 
 	// ACT
 	rsp, err := suite.ZgChain.Grpc.BaseAccount(zgAcc.SdkAddress.String())

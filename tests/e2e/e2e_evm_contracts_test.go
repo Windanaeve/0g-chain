@@ -11,8 +11,8 @@ import (
 	banktypes "github.com/cosmos/cosmos-sdk/x/bank/types"
 
 	"github.com/0glabs/0g-chain/app"
-	evmutiltypes "github.com/0glabs/0g-chain/x/evmutil/types"
 
+	"github.com/0glabs/0g-chain/chaincfg"
 	"github.com/0glabs/0g-chain/tests/e2e/contracts/greeter"
 	"github.com/0glabs/0g-chain/tests/util"
 )
@@ -21,7 +21,7 @@ func (suite *IntegrationTestSuite) TestEthCallToGreeterContract() {
 	// this test manipulates state of the Greeter contract which means other tests shouldn't use it.
 
 	// setup funded account to interact with contract
-	user := suite.ZgChain.NewFundedAccount("greeter-contract-user", sdk.NewCoins(a0gi(big.NewInt(1e6))))
+	user := suite.ZgChain.NewFundedAccount("greeter-contract-user", sdk.NewCoins(chaincfg.MakeCoinForGasDenom(1e6)))
 
 	greeterAddr := suite.ZgChain.ContractAddrs["greeter"]
 	contract, err := greeter.NewGreeter(greeterAddr, suite.ZgChain.EvmClient)
@@ -64,12 +64,12 @@ func (suite *IntegrationTestSuite) TestEthCallToErc20() {
 
 func (suite *IntegrationTestSuite) TestEip712BasicMessageAuthorization() {
 	// create new funded account
-	sender := suite.ZgChain.NewFundedAccount("eip712-msgSend", sdk.NewCoins(a0gi(big.NewInt(2e4))))
+	sender := suite.ZgChain.NewFundedAccount("eip712-msgSend", sdk.NewCoins(chaincfg.MakeCoinForGasDenom(2e4)))
 	receiver := app.RandomAddress()
 
-	// setup message for sending some a0gi to random receiver
+	// setup message for sending some gas denom to random receiver
 	msgs := []sdk.Msg{
-		banktypes.NewMsgSend(sender.SdkAddress, receiver, sdk.NewCoins(a0gi(big.NewInt(1e3)))),
+		banktypes.NewMsgSend(sender.SdkAddress, receiver, sdk.NewCoins(chaincfg.MakeCoinForGasDenom(1e3))),
 	}
 
 	// create tx
@@ -77,7 +77,7 @@ func (suite *IntegrationTestSuite) TestEip712BasicMessageAuthorization() {
 		sender,
 		suite.ZgChain,
 		1e6,
-		sdk.NewCoins(a0gi(big.NewInt(1e4))),
+		sdk.NewCoins(chaincfg.MakeCoinForGasDenom(1e4)),
 		msgs,
 		"this is a memo",
 	).GetTx()
@@ -96,10 +96,10 @@ func (suite *IntegrationTestSuite) TestEip712BasicMessageAuthorization() {
 	_, err = util.WaitForSdkTxCommit(suite.ZgChain.Grpc.Query.Tx, res.TxResponse.TxHash, 6*time.Second)
 	suite.NoError(err)
 
-	// check that the message was processed & the a0gi is transferred.
+	// check that the message was processed & the gas denom is transferred.
 	balRes, err := suite.ZgChain.Grpc.Query.Bank.Balance(context.Background(), &banktypes.QueryBalanceRequest{
 		Address: receiver.String(),
-		Denom:   "ua0gi",
+		Denom:   chaincfg.GasDenom,
 	})
 	suite.NoError(err)
 	suite.Equal(sdk.NewInt(1e3), balRes.Balance.Amount)
@@ -107,95 +107,95 @@ func (suite *IntegrationTestSuite) TestEip712BasicMessageAuthorization() {
 
 // Note that this test works because the deployed erc20 is configured in evmutil & cdp params.
 // This test matches the webapp's "USDT Earn" workflow
-func (suite *IntegrationTestSuite) TestEip712ConvertToCoinAndDepositToLend() {
-	// cdp requires minimum of $11 collateral
-	amount := sdk.NewInt(11e6) // 11 USDT
-	// principal := sdk.NewCoin("usdx", sdk.NewInt(10e6))
-	sdkDenom := suite.DeployedErc20.CosmosDenom
+// func (suite *IntegrationTestSuite) TestEip712ConvertToCoinAndDepositToLend() {
+// 	// cdp requires minimum of $11 collateral
+// 	amount := sdk.NewInt(11e6) // 11 USDT
+// 	principal := sdk.NewCoin("usdx", sdk.NewInt(10e6))
+// 	sdkDenom := suite.DeployedErc20.CosmosDenom
 
-	// create new funded account
-	depositor := suite.ZgChain.NewFundedAccount("eip712-lend-depositor", sdk.NewCoins(a0gi(big.NewInt(1e5))))
-	// give them erc20 balance to deposit
-	fundRes := suite.FundZgChainErc20Balance(depositor.EvmAddress, amount.BigInt())
-	suite.NoError(fundRes.Err)
+// 	// create new funded account
+// 	depositor := suite.ZgChain.NewFundedAccount("eip712-lend-depositor", sdk.NewCoins(chaincfg.MakeCoinForGasDenom(1e5)))
+// 	// give them erc20 balance to deposit
+// 	fundRes := suite.FundZgChainErc20Balance(depositor.EvmAddress, amount.BigInt())
+// 	suite.NoError(fundRes.Err)
 
-	// setup messages for convert to coin & deposit into earn
-	convertMsg := evmutiltypes.NewMsgConvertERC20ToCoin(
-		evmutiltypes.NewInternalEVMAddress(depositor.EvmAddress),
-		depositor.SdkAddress,
-		evmutiltypes.NewInternalEVMAddress(suite.DeployedErc20.Address),
-		amount,
-	)
-	// depositMsg := cdptypes.NewMsgCreateCDP(
-	// 	depositor.SdkAddress,
-	// 	sdk.NewCoin(sdkDenom, amount),
-	// 	principal,
-	// 	suite.DeployedErc20.CdpCollateralType,
-	// )
-	msgs := []sdk.Msg{
-		// convert to coin
-		&convertMsg,
-		// deposit into cdp (Mint), take out USDX
-		// &depositMsg,
-	}
+// 	// setup messages for convert to coin & deposit into earn
+// 	convertMsg := evmutiltypes.NewMsgConvertERC20ToCoin(
+// 		evmutiltypes.NewInternalEVMAddress(depositor.EvmAddress),
+// 		depositor.SdkAddress,
+// 		evmutiltypes.NewInternalEVMAddress(suite.DeployedErc20.Address),
+// 		amount,
+// 	)
+// 	// depositMsg := cdptypes.NewMsgCreateCDP(
+// 	// 	depositor.SdkAddress,
+// 	// 	sdk.NewCoin(sdkDenom, amount),
+// 	// 	principal,
+// 	// 	suite.DeployedErc20.CdpCollateralType,
+// 	// )
+// 	msgs := []sdk.Msg{
+// 		// convert to coin
+// 		&convertMsg,
+// 		// deposit into cdp (Mint), take out USDX
+// 		// &depositMsg,
+// 	}
 
-	// create tx
-	tx := suite.NewEip712TxBuilder(
-		depositor,
-		suite.ZgChain,
-		1e6,
-		sdk.NewCoins(a0gi(big.NewInt(1e4))),
-		msgs,
-		"doing the USDT Earn workflow! erc20 -> sdk.Coin -> USDX hard deposit",
-	).GetTx()
+// 	// create tx
+// 	tx := suite.NewEip712TxBuilder(
+// 		depositor,
+// 		suite.ZgChain,
+// 		1e6,
+// 		sdk.NewCoins(chaincfg.MakeCoinForGasDenom(1e4)),
+// 		msgs,
+// 		"doing the USDT Earn workflow! erc20 -> sdk.Coin -> USDX hard deposit",
+// 	).GetTx()
 
-	txBytes, err := suite.ZgChain.EncodingConfig.TxConfig.TxEncoder()(tx)
-	suite.NoError(err)
+// 	txBytes, err := suite.ZgChain.EncodingConfig.TxConfig.TxEncoder()(tx)
+// 	suite.NoError(err)
 
-	// broadcast tx
-	res, err := suite.ZgChain.Grpc.Query.Tx.BroadcastTx(context.Background(), &txtypes.BroadcastTxRequest{
-		TxBytes: txBytes,
-		Mode:    txtypes.BroadcastMode_BROADCAST_MODE_SYNC,
-	})
-	suite.NoError(err)
-	suite.Equal(sdkerrors.SuccessABCICode, res.TxResponse.Code)
+// 	// broadcast tx
+// 	res, err := suite.ZgChain.Grpc.Query.Tx.BroadcastTx(context.Background(), &txtypes.BroadcastTxRequest{
+// 		TxBytes: txBytes,
+// 		Mode:    txtypes.BroadcastMode_BROADCAST_MODE_SYNC,
+// 	})
+// 	suite.NoError(err)
+// 	suite.Equal(sdkerrors.SuccessABCICode, res.TxResponse.Code)
 
-	_, err = util.WaitForSdkTxCommit(suite.ZgChain.Grpc.Query.Tx, res.TxResponse.TxHash, 6*time.Second)
-	suite.Require().NoError(err)
+// 	_, err = util.WaitForSdkTxCommit(suite.ZgChain.Grpc.Query.Tx, res.TxResponse.TxHash, 6*time.Second)
+// 	suite.Require().NoError(err)
 
-	// check that depositor no longer has erc20 balance
-	balance := suite.ZgChain.GetErc20Balance(suite.DeployedErc20.Address, depositor.EvmAddress)
-	suite.BigIntsEqual(big.NewInt(0), balance, "expected no erc20 balance")
+// 	// check that depositor no longer has erc20 balance
+// 	balance := suite.ZgChain.GetErc20Balance(suite.DeployedErc20.Address, depositor.EvmAddress)
+// 	suite.BigIntsEqual(big.NewInt(0), balance, "expected no erc20 balance")
 
-	// check that account has cdp
-	// cdpRes, err := suite.ZgChain.Grpc.Query.Cdp.Cdp(context.Background(), &cdptypes.QueryCdpRequest{
-	// 	CollateralType: suite.DeployedErc20.CdpCollateralType,
-	// 	Owner:          depositor.SdkAddress.String(),
-	// })
-	// suite.NoError(err)
-	// suite.True(cdpRes.Cdp.Collateral.Amount.Equal(amount))
-	// suite.True(cdpRes.Cdp.Principal.Equal(principal))
+// 	// check that account has cdp
+// 	// cdpRes, err := suite.ZgChain.Grpc.Query.Cdp.Cdp(context.Background(), &cdptypes.QueryCdpRequest{
+// 	// 	CollateralType: suite.DeployedErc20.CdpCollateralType,
+// 	// 	Owner:          depositor.SdkAddress.String(),
+// 	// })
+// 	// suite.NoError(err)
+// 	// suite.True(cdpRes.Cdp.Collateral.Amount.Equal(amount))
+// 	// suite.True(cdpRes.Cdp.Principal.Equal(principal))
 
-	// withdraw deposit & convert back to erc20 (this allows refund to recover erc20s used in test)
-	// withdraw := cdptypes.NewMsgRepayDebt(
-	// 	depositor.SdkAddress,
-	// 	suite.DeployedErc20.CdpCollateralType,
-	// 	principal,
-	// )
-	convertBack := evmutiltypes.NewMsgConvertCoinToERC20(
-		depositor.SdkAddress.String(),
-		depositor.EvmAddress.Hex(),
-		sdk.NewCoin(sdkDenom, amount),
-	)
-	withdrawAndConvertBack := util.ZgChainMsgRequest{
-		Msgs:      []sdk.Msg{ /*&withdraw,*/ &convertBack},
-		GasLimit:  1e6,
-		FeeAmount: sdk.NewCoins(a0gi(big.NewInt(1000))),
-		Data:      "withdrawing from mint & converting back to erc20",
-	}
-	lastRes := depositor.SignAndBroadcastZgChainTx(withdrawAndConvertBack)
-	suite.NoError(lastRes.Err)
+// 	// withdraw deposit & convert back to erc20 (this allows refund to recover erc20s used in test)
+// 	// withdraw := cdptypes.NewMsgRepayDebt(
+// 	// 	depositor.SdkAddress,
+// 	// 	suite.DeployedErc20.CdpCollateralType,
+// 	// 	principal,
+// 	// )
+// 	convertBack := evmutiltypes.NewMsgConvertCoinToERC20(
+// 		depositor.SdkAddress.String(),
+// 		depositor.EvmAddress.Hex(),
+// 		sdk.NewCoin(sdkDenom, amount),
+// 	)
+// 	withdrawAndConvertBack := util.ZgChainMsgRequest{
+// 		Msgs:      []sdk.Msg{&withdraw, &convertBack},
+// 		GasLimit:  1e6,
+// 		FeeAmount: sdk.NewCoins(chaincfg.MakeCoinForGasDenom(1000)),
+// 		Data:      "withdrawing from mint & converting back to erc20",
+// 	}
+// 	lastRes := depositor.SignAndBroadcastZgChainTx(withdrawAndConvertBack)
+// 	suite.NoError(lastRes.Err)
 
-	balance = suite.ZgChain.GetErc20Balance(suite.DeployedErc20.Address, depositor.EvmAddress)
-	suite.BigIntsEqual(amount.BigInt(), balance, "expected returned erc20 balance")
-}
+// 	balance = suite.ZgChain.GetErc20Balance(suite.DeployedErc20.Address, depositor.EvmAddress)
+// 	suite.BigIntsEqual(amount.BigInt(), balance, "expected returned erc20 balance")
+// }

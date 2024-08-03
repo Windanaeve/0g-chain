@@ -2,18 +2,18 @@ package e2e_test
 
 import (
 	"context"
-	"math/big"
 
 	sdk "github.com/cosmos/cosmos-sdk/types"
 	banktypes "github.com/cosmos/cosmos-sdk/x/bank/types"
 
+	"github.com/0glabs/0g-chain/chaincfg"
 	evmutiltypes "github.com/0glabs/0g-chain/x/evmutil/types"
 )
 
 func (suite *IntegrationTestSuite) TestGrpcClientQueryCosmosModule_Balance() {
 	// ARRANGE
 	// setup 0g account
-	funds := a0gi(big.NewInt(1e5))
+	funds := chaincfg.MakeCoinForGasDenom(1e5)
 	zgAcc := suite.ZgChain.NewFundedAccount("balance-test", sdk.NewCoins(funds))
 
 	// ACT

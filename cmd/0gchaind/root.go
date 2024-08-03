@@ -75,7 +75,7 @@ func NewRootCmd() *cobra.Command {
 				return err
 			}
 
-			customAppTemplate, customAppConfig := servercfg.AppConfig("ua0gi")
+			customAppTemplate, customAppConfig := servercfg.AppConfig(chaincfg.GasDenom)
 
 			return server.InterceptConfigsPreRunHandler(
 				cmd,
@@ -131,7 +131,7 @@ func addSubCmds(rootCmd *cobra.Command, encodingConfig params.EncodingConfig, de
 		ac.addStartCmdFlags,
 	)
 
-	// add keybase, auxiliary RPC, query, and tx child commands
+	// add keybase, gas RPC, query, and tx child commands
 	rootCmd.AddCommand(
 		newQueryCmd(),
 		newTxCmd(),

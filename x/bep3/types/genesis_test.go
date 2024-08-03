@@ -20,7 +20,7 @@ type GenesisTestSuite struct {
 }
 
 func (suite *GenesisTestSuite) SetupTest() {
-	coin := sdk.NewCoin("a0gi", sdk.OneInt())
+	coin := chaincfg.MakeCoinForGasDenom(1)
 	suite.swaps = atomicSwaps(10)
 
 	supply := types.NewAssetSupply(coin, coin, coin, coin, time.Duration(0))
@@ -100,7 +100,6 @@ func (suite *GenesisTestSuite) TestValidate() {
 	for _, tc := range testCases {
 		suite.Run(tc.name, func() {
 			chaincfg.SetSDKConfig()
-
 			var gs types.GenesisState
 			if tc.name == "default" {
 				gs = types.DefaultGenesisState()

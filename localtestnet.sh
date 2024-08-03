@@ -24,7 +24,7 @@ DATA=~/.0gchain
 # remove any old state and config
 rm -rf $DATA
 
-BINARY=0gchaind
+BINARY=./.build/0gchaind
 
 # Create new data directory, overwriting any that alread existed
 chainID="zgchain_8888-1"
@@ -48,12 +48,12 @@ $BINARY config keyring-backend test
 
 # Create validator keys and add account to genesis
 validatorKeyName="validator"
-printf "$validatorMnemonic\n" | $BINARY keys add $validatorKeyName --recover
+printf "$validatorMnemonic\n" | $BINARY keys add $validatorKeyName --eth --recover
 $BINARY add-genesis-account $validatorKeyName 2000000000000000000000ua0gi
 
 # Create faucet keys and add account to genesis
 faucetKeyName="faucet"
-printf "$faucetMnemonic\n" | $BINARY keys add $faucetKeyName --recover
+printf "$faucetMnemonic\n" | $BINARY keys add $faucetKeyName --eth --recover
 $BINARY add-genesis-account $faucetKeyName 1000000000000000000000ua0gi
 
 evmFaucetKeyName="evm-faucet"
