@@ -6,6 +6,10 @@ BINARY_NAME := 0gchaind
 MAIN_ENTRY := ./cmd/$(BINARY_NAME)
 DOCKER_IMAGE_NAME := 0glabs/$(PROJECT_NAME)
 GO_BIN ?= go
+ARCH := $(shell uname -m)
+WASMVM_VERSION := $(shell $(GO_BIN) list -m github.com/CosmWasm/wasmvm | sed 's/.* //')
+$(shell wget https://github.com/CosmWasm/wasmvm/releases/download/$(WASMVM_VERSION)/libwasmvm_muslc.$(ARCH).a -O /lib/libwasmvm.$(ARCH).a)
+LINK_STATICALLY=true
 
 GIT_BRANCH := $(shell git rev-parse --abbrev-ref HEAD)
 GIT_COMMIT := $(shell git rev-parse HEAD)
@@ -175,7 +179,7 @@ ifeq (,$(findstring nostrip,$(COSMOS_BUILD_OPTIONS)))
   ldflags += -w -s
 endif
 ifeq ($(LINK_STATICALLY),true)
-	ldflags += -linkmode=external -extldflags "-Wl,-z,muldefs -static"
+	ldflags += -linkmode=external -extldflags "-Wl,-z,muldefs -static -lm"
 endif
 ldflags += $(LDFLAGS)
 ldflags := $(strip $(ldflags))
