@@ -8,8 +8,6 @@ DOCKER_IMAGE_NAME := 0glabs/$(PROJECT_NAME)
 GO_BIN ?= go
 ARCH := $(shell uname -m)
 WASMVM_VERSION := $(shell $(GO_BIN) list -m github.com/CosmWasm/wasmvm | sed 's/.* //')
-$(shell wget https://github.com/CosmWasm/wasmvm/releases/download/$(WASMVM_VERSION)/libwasmvm_muslc.$(ARCH).a -O /lib/libwasmvm.$(ARCH).a)
-LINK_STATICALLY=true
 
 GIT_BRANCH := $(shell git rev-parse --abbrev-ref HEAD)
 GIT_COMMIT := $(shell git rev-parse HEAD)
@@ -201,6 +199,10 @@ ifeq ($(OS), Windows_NT)
 else
 	$(GO_BIN) build -mod=readonly $(BUILD_FLAGS) -o out/$(shell $(GO_BIN) env GOOS)/$(BINARY_NAME) $(MAIN_ENTRY)
 endif
+
+build-release: go.sum
+	wget https://github.com/CosmWasm/wasmvm/releases/download/$(WASMVM_VERSION)/libwasmvm_muslc.$(ARCH).a -O libwasmvm.$(ARCH).a
+	$(GO_BIN) build -mod=readonly $(BUILD_FLAGS) -o out/$(shell $(GO_BIN) env GOOS)/$(BINARY_NAME) $(MAIN_ENTRY)
 
 build-linux: go.sum
 	LEDGER_ENABLED=false GOOS=linux GOARCH=amd64 $(MAKE) build
