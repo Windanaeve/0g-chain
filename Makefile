@@ -177,8 +177,6 @@ ifeq (,$(findstring nostrip,$(COSMOS_BUILD_OPTIONS)))
   ldflags += -w -s
 endif
 
-$(info The value of LINK_STATICALLY is: $(LINK_STATICALLY))
-
 ifeq ($(LINK_STATICALLY),true)
 	ldflags += -linkmode=external -extldflags "-Wl,-z,muldefs -static -lm"
 endif
