@@ -16,7 +16,7 @@ jobs:
       with:
         go-version: '1.21'
     - name: Build
-      run: make build-release
+      run: sudo make build-release
     - name: Rename file
       run: mv ./out/linux/0gchaind ./out/linux/0gchaind-linux-${{ github.ref_name }}
     - name: Upload Release Asset

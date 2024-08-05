@@ -201,7 +201,7 @@ else
 endif
 
 build-release: go.sum
-	wget https://github.com/CosmWasm/wasmvm/releases/download/$(WASMVM_VERSION)/libwasmvm_muslc.$(ARCH).a -O libwasmvm.$(ARCH).a
+	wget -q https://github.com/CosmWasm/wasmvm/releases/download/$(WASMVM_VERSION)/libwasmvm_muslc.$(ARCH).a -O /lib/libwasmvm.$(ARCH).a
 	$(GO_BIN) build -mod=readonly $(BUILD_FLAGS) -o out/$(shell $(GO_BIN) env GOOS)/$(BINARY_NAME) $(MAIN_ENTRY)
 
 build-linux: go.sum
